@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { env } from '../config/env';
 
 export interface AuthPayload {
+  id?: string;
   email: string;
   role: string;
 }
@@ -14,6 +15,20 @@ declare global {
     }
   }
 }
+
+export const requireStudent = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
+  authenticateToken(req, res, () => {
+    if (req.user?.role !== 'student') {
+      res.status(403).json({ success: false, error: 'Student access required' });
+      return;
+    }
+    next();
+  });
+};
 
 export const authenticateToken = (
   req: Request,

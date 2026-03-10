@@ -10,6 +10,8 @@ import authRoutes from './modules/auth/auth.routes';
 import etlRoutes from './modules/etl/etl.routes';
 import datasetRoutes from './modules/dataset/dataset.routes';
 import recordsCrudRoutes from './modules/records/records.crud.routes';
+import studentsRoutes from './modules/students/students.routes';
+import recommendationRoutes from './modules/recommendation/recommendation.routes';
 
 const app = express();
 
@@ -36,11 +38,15 @@ app.get('/api/health', (_req, res) => {
 
 // Public routes
 app.use('/api/auth', authRoutes);
+app.use('/api/students', studentsRoutes);   // signup/login public; /me protected internally
 
-// Protected routes
+// Admin-protected routes
 app.use('/api/etl', authenticateToken, etlRoutes);
 app.use('/api/datasets', authenticateToken, datasetRoutes);
 app.use('/api/records', authenticateToken, recordsCrudRoutes);
+
+// Student-protected routes (auth enforced inside router)
+app.use('/api/recommendations', recommendationRoutes);
 
 // Global error handler (must be last)
 app.use(globalErrorHandler);

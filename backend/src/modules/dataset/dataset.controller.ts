@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { datasetService } from './dataset.service';
+import { getDatasetAnalytics } from './dataset.analytics';
 
 export class DatasetController {
   findAll = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -33,6 +34,15 @@ export class DatasetController {
     try {
       const stats = await datasetService.getStats();
       res.json({ success: true, data: stats });
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  getAnalytics = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const analytics = await getDatasetAnalytics();
+      res.json({ success: true, data: analytics });
     } catch (err) {
       next(err);
     }

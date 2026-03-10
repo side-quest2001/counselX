@@ -7,6 +7,9 @@ const router = Router();
 // GET /api/datasets/stats
 router.get('/stats', datasetController.getStats);
 
+// GET /api/datasets/analytics
+router.get('/analytics', datasetController.getAnalytics);
+
 // GET /api/datasets
 router.get('/', datasetController.findAll);
 

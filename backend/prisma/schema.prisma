@@ -50,3 +50,64 @@ model StudentContextRecord {
 
   @@map("student_context_records")
 }
+
+// ─── Student Auth ────────────────────────────────────────────────────────────
+
+model Student {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  password  String
+  country   String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  profiles StudentProfile[]
+
+  @@map("students")
+}
+
+// ─── Student Profile ─────────────────────────────────────────────────────────
+
+model StudentProfile {
+  id                   String   @id @default(uuid())
+  studentId            String   @map("student_id")
+  student              Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  satScore             Int?     @map("sat_score")
+  jeeRank              Int?     @map("jee_rank")
+  neetScore            Float?   @map("neet_score")
+  gpa                  Float?
+  sopStrength          Float?   @map("sop_strength")
+  lorStrength          Float?   @map("lor_strength")
+  extracurricularScore Float?   @map("extracurricular_score")
+  preferredCountry     String?  @map("preferred_country")
+  budget               Float?
+  targetMajor          String?  @map("target_major")
+  createdAt            DateTime @default(now()) @map("created_at")
+
+  recommendations Recommendation[]
+
+  @@map("student_profiles")
+}
+
+// ─── Recommendations ─────────────────────────────────────────────────────────
+
+enum RecommendationCategory {
+  SAFE
+  TARGET
+  AMBITIOUS
+}
+
+model Recommendation {
+  id                   String                 @id @default(uuid())
+  studentProfileId     String                 @map("student_profile_id")
+  studentProfile       StudentProfile         @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+
+  universityName       String                 @map("university_name")
+  category             RecommendationCategory
+  confidenceScore      Float                  @map("confidence_score")
+  similarProfilesCount Int                    @default(0) @map("similar_profiles_count")
+  createdAt            DateTime               @default(now()) @map("created_at")
+
+  @@map("recommendations")
+}

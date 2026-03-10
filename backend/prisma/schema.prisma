@@ -83,6 +83,7 @@ model StudentProfile {
   preferredCountry     String?  @map("preferred_country")
   budget               Float?
   targetMajor          String?  @map("target_major")
+  llmInsight           String?  @map("llm_insight")
   createdAt            DateTime @default(now()) @map("created_at")
 
   recommendations Recommendation[]

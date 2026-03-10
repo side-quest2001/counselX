@@ -82,34 +82,68 @@ export class RecommendationService {
       },
     });
 
-    // 2. Query historical dataset for similar profiles
-    const satMin = (input.satScore ?? 0) - 50;
-    const satMax = (input.satScore ?? 9999) + 50;
+    // 2. Query historical dataset for similar profiles (tiered relaxation)
+    const satMin = (input.satScore ?? 0) - 100;
+    const satMax = (input.satScore ?? 9999) + 100;
 
-    const similar = await prisma.studentContextRecord.findMany({
-      where: {
-        AND: [
-          input.satScore
-            ? { satScore: { gte: satMin, lte: satMax } }
-            : {},
-          input.preferredCountry
-            ? { preferredCountry: { equals: input.preferredCountry, mode: 'insensitive' } }
-            : {},
-          input.targetMajor
-            ? { courseInterest: { contains: input.targetMajor, mode: 'insensitive' } }
-            : {},
-          { recommendedCollege: { not: null } },
-        ],
-      },
-      select: {
-        satScore: true,
-        recommendedCollege: true,
-        courseInterest: true,
-        preferredCountry: true,
-        budgetRange: true,
-      },
+    const baseSelect = {
+      satScore: true,
+      recommendedCollege: true,
+      courseInterest: true,
+      preferredCountry: true,
+      budgetRange: true,
+    };
+
+    const satFilter = input.satScore ? { satScore: { gte: satMin, lte: satMax } } : {};
+    const countryFilter = input.preferredCountry
+      ? { preferredCountry: { equals: input.preferredCountry, mode: 'insensitive' as const } }
+      : {};
+    const majorFilter = input.targetMajor
+      ? { courseInterest: { contains: input.targetMajor, mode: 'insensitive' as const } }
+      : {};
+
+    // Tier 1: SAT + country + major
+    let similar = await prisma.studentContextRecord.findMany({
+      where: { AND: [satFilter, countryFilter, majorFilter, { recommendedCollege: { not: null } }] },
+      select: baseSelect,
       take: 200,
     });
+
+    // Tier 2: SAT + country (drop major)
+    if (similar.length < 10) {
+      similar = await prisma.studentContextRecord.findMany({
+        where: { AND: [satFilter, countryFilter, { recommendedCollege: { not: null } }] },
+        select: baseSelect,
+        take: 200,
+      });
+    }
+
+    // Tier 3: SAT + major (drop country)
+    if (similar.length < 10) {
+      similar = await prisma.studentContextRecord.findMany({
+        where: { AND: [satFilter, majorFilter, { recommendedCollege: { not: null } }] },
+        select: baseSelect,
+        take: 200,
+      });
+    }
+
+    // Tier 4: SAT only
+    if (similar.length < 10 && input.satScore) {
+      similar = await prisma.studentContextRecord.findMany({
+        where: { AND: [satFilter, { recommendedCollege: { not: null } }] },
+        select: baseSelect,
+        take: 200,
+      });
+    }
+
+    // Tier 5: any records with a recommendation
+    if (similar.length < 10) {
+      similar = await prisma.studentContextRecord.findMany({
+        where: { recommendedCollege: { not: null } },
+        select: baseSelect,
+        take: 200,
+      });
+    }
 
     const similarCount = similar.length;
 
@@ -157,7 +191,13 @@ export class RecommendationService {
       universities,
     });
 
-    // 7. Build mentor links
+    // 7. Store llmInsight on the profile
+    await prisma.studentProfile.update({
+      where: { id: profile.id },
+      data: { llmInsight },
+    });
+
+    // 8. Build mentor links
     const mentors = mentorsService.buildMentorLinks(
       universities.slice(0, 5),
       input.targetMajor
@@ -172,13 +212,34 @@ export class RecommendationService {
     };
   }
 
-  async getProfileRecommendations(profileId: string) {
+  async getProfileRecommendations(profileId: string): Promise<RecommendationResult | null> {
     const profile = await prisma.studentProfile.findUnique({
       where: { id: profileId },
       include: { recommendations: { orderBy: { confidenceScore: 'desc' } } },
     });
 
-    return profile;
+    if (!profile) return null;
+
+    const universities: UniversityResult[] = profile.recommendations.map((r) => ({
+      universityName: r.universityName,
+      admitCount: r.similarProfilesCount,
+      avgSat: null,
+      category: r.category,
+      confidenceScore: r.confidenceScore,
+    }));
+
+    const mentors = mentorsService.buildMentorLinks(
+      universities.slice(0, 5),
+      profile.targetMajor ?? undefined
+    );
+
+    return {
+      profileId: profile.id,
+      similarCount: profile.recommendations.reduce((sum, r) => sum + r.similarProfilesCount, 0),
+      universities,
+      llmInsight: profile.llmInsight ?? 'No AI insight available for this profile.',
+      mentors,
+    };
   }
 
   async getStudentProfiles(studentId: string) {

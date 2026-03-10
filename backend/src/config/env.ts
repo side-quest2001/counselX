@@ -15,7 +15,7 @@ const EnvSchema = z.object({
   MAX_FILE_SIZE_MB: z.coerce.number().default(50),
   GROK_API_KEY: z.string().min(1, 'GROK_API_KEY is required'),
   GROK_API_URL: z.string().url().default('https://api.x.ai/v1/chat/completions'),
-  TOPMATE_SEARCH_BASE: z.string().url().default('https://topmate.io/search?q='),
+  TOPMATE_SEARCH_BASE: z.string().url().default('https://topmate.io/search/chat?text='),
 });
 
 const result = EnvSchema.safeParse(process.env);

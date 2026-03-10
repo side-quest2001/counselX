@@ -21,16 +21,13 @@ export class MentorsService {
         : u.universityName;
 
       const encoded = encodeURIComponent(query);
-      const base = env.TOPMATE_SEARCH_BASE.endsWith('=')
-        ? env.TOPMATE_SEARCH_BASE
-        : `${env.TOPMATE_SEARCH_BASE}=`;
 
       return {
         university: u.universityName,
         label: major
           ? `${u.universityName} ${major} mentors`
           : `${u.universityName} alumni`,
-        searchUrl: `${base}${encoded}`,
+        searchUrl: `${env.TOPMATE_SEARCH_BASE}${encoded}&autosend=true`,
       };
     });
   }

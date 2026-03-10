@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum DatasetStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model Dataset {
+  id          String        @id @default(uuid())
+  name        String
+  description String?
+  source      String?
+  uploadedAt  DateTime      @default(now()) @map("uploaded_at")
+  rowCount    Int           @default(0) @map("row_count")
+  status      DatasetStatus @default(PENDING)
+  records     StudentContextRecord[]
+
+  @@map("datasets")
+}
+
+model StudentContextRecord {
+  id                  String   @id @default(uuid())
+  datasetId           String   @map("dataset_id")
+  dataset             Dataset  @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+
+  studentProfileScore Float?   @map("student_profile_score")
+  satScore            Int?     @map("sat_score")
+  neetScore           Float?   @map("neet_score")
+  jeeScore            Float?   @map("jee_score")
+  courseInterest      String?  @map("course_interest")
+  preferredCountry    String?  @map("preferred_country")
+  preferredState      String?  @map("preferred_state")
+  budgetRange         String?  @map("budget_range")
+  sopStrength         Float?   @map("sop_strength")
+  lorStrength         Float?   @map("lor_strength")
+  profileRating       Float?   @map("profile_rating")
+  targetCollegeRank   Int?     @map("target_college_rank")
+  recommendedCollege  String?  @map("recommended_college")
+  recommendedCourse   String?  @map("recommended_course")
+  createdAt           DateTime @default(now()) @map("created_at")
+
+  @@map("student_context_records")
+}

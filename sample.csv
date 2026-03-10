@@ -1,0 +1,8 @@
+student_profile_score,SAT,NEET,JEE,course_interest,country,state,budget,sop,lor,rating,collegeRank,recommended_college,recommended_course
+85.5,1450,620.0,5200,Computer Science,India,Maharashtra,50000,8.5,7.5,8.2,150,IIT Bombay,B.Tech CS
+72.0,1280,,12000,Medicine,USA,California,80000,7.0,6.5,7.0,200,UCSF,MD
+90.0,1560,720.5,,Data Science,United States,New York,120000,9.0,9.0,9.5,50,MIT,MS Data Science
+65.5,,,8500,Engineering,IN,Delhi,30000,6.0,6.0,6.5,300,NIT Delhi,B.Tech ECE
+78.0,1380,580.0,9000,Business,UK,,70000,7.5,7.0,7.8,100,London School,MBA
+55.0,1820,,,,,,,,,,,,
+88.5,1490,690.0,4500,Computer Science,ind,Karnataka,60000,8.0,8.5,8.8,120,IISC Bangalore,M.Tech
